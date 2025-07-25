@@ -84,5 +84,40 @@ async function fetchFilters(){
     const response = await fetch('https://qxplcd.ca/monster/monster.php?traits=list');
     const json = await response.json();
 
-    console.log(json);
+    //loop through the json object, looking at both the keys and the values
+    //the keys in this case are the categories of traits (ie. species)
+    //the values are which traits are available
+    //Object.entries gives you both the key and the value
+    for(const [key, value] of Object.entries(json.traits)){
+        //build a template literal using the key as a header for lists of filters
+        //and each value as a radio button option the user can filter by
+        let filterTemplate = `<article class="filter"><h3>${key}</h3><ul>`;
+
+        //loop through the arrays of values and create list items with radio buttons
+        for(let i=0; i<value.length; i++){
+            filterTemplate += `<li>
+                <label><input type="radio" name="${key}" id="${key}${i}">${value[i]}</label>
+                </li>`;
+        }
+        
+        //now close the ul and the article to complete our template
+        filterTemplate += `</ul></article>`;
+
+        //and add the template to the filter section
+        document.querySelector(".filters").innerHTML += filterTemplate;
+    }
 }
+
+//add an event listener to the .filters section
+//use event delegation to see if we've clicked on a radio button
+document.querySelector(".filters").addEventListener("click", async function(event){
+    //check to see if we've clicked on a radio button (if the element has a name)
+    if(event.target.name){
+        //use a template literal to build the request
+        const response = await fetch(`https://qxplcd.ca/monster/monster.php?${event.target.name}=${event.target.parentNode.textContent}`);
+        const json = await response.json();
+
+        //use the create gallery function to build a gallery with only the matching monsters
+        createGallery(json);
+    }
+})
